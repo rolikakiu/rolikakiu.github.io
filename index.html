@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BGH 2048 • DreamOS</title>
+<style>
+*{box-sizing:border-box}body{margin:0;min-height:100vh;font-family:Arial,sans-serif;background:#0b1020;color:#fff}
+button{border:0;border-radius:9px;padding:10px 14px;font-weight:800;cursor:pointer}
+.game{width:min(94vw,540px);margin:auto;padding:20px 0}.tabs{display:flex;gap:8px;margin-bottom:14px}.tab{flex:1;background:#1e293b;color:#cbd5e1}.tab.active{background:#f59e0b;color:#111827}
+header{display:flex;justify-content:space-between;align-items:end;margin-bottom:12px}h1{font-size:54px;margin:0;letter-spacing:-4px}.tag{color:#c4b5fd;font-weight:bold}
+.scores{display:flex;gap:7px}.score{background:#1e293b;border:1px solid #374151;border-radius:10px;padding:7px 13px;text-align:center}.score small{display:block;color:#94a3b8}.score b{font-size:20px}
+.controls{display:flex;justify-content:space-between;align-items:center;margin:10px 0}.hint{color:#cbd5e1;font-size:13px}
+#board{width:100%;aspect-ratio:1;background:#111827;padding:10px;border-radius:16px;display:grid;grid-template-columns:repeat(4,1fr);gap:10px;touch-action:none}
+.cell{border-radius:10px;background:#374151;display:flex;align-items:center;justify-content:center;font-size:clamp(25px,8vw,48px);font-weight:900}.t2{background:#eee4da;color:#776e65}.t4{background:#ede0c8;color:#776e65}.t8{background:#f2b179}.t16{background:#f59563}.t32{background:#f67c5f}.t64{background:#f65e3b}.t128{background:#edcf72}.t256{background:#edcc61}.t512{background:#edc850}.t1024{background:#edc53f}.t2048{background:#f0c42f;color:#111827;box-shadow:0 0 22px #fbbf24}
+.sleep{min-height:560px;border-radius:18px;background:radial-gradient(circle at 50% 15%,#4338ca,#111827 65%);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:30px}.moon{font-size:85px}.sleep h2{font-size:42px;margin:10px}.sleep p{color:#cbd5e1;max-width:320px}.dream-btn{background:#f59e0b;color:#111827;font-size:18px;margin-top:16px}
+footer{text-align:center;color:#64748b;font-size:12px;margin-top:12px}
+.overlay{position:fixed;inset:0;background:rgba(3,7,18,.75);display:none;align-items:center;justify-content:center;z-index:100}.modal{background:#1f2937;border:1px solid #475569;border-radius:16px;padding:28px;text-align:center}.secondary{background:#475569;color:#fff}
+#dreamOverlay{display:none;position:fixed;inset:0;background:#080b18;z-index:200;overflow:auto}
+.dream-desktop{position:relative;width:100%;min-height:100vh;overflow:hidden;background:linear-gradient(135deg,#11183d,#312e81,#172554)}
+.dream-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.35}
+.topbar{position:absolute;z-index:3;left:18px;right:18px;top:14px;height:50px;border-radius:17px;background:rgba(8,12,35,.72);border:1px solid #475569;backdrop-filter:blur(12px);display:flex;align-items:center;padding:0 16px}.brand{font-size:23px;font-weight:900}.sub{margin-left:18px;color:#c4b5fd}.status{margin-left:auto;color:#cbd5e1;font-size:13px}
+.desktop-icons{position:absolute;z-index:3;left:20px;top:82px;display:grid;gap:8px}.desktop-icon{width:90px;background:transparent;color:#fff;box-shadow:none;text-shadow:0 2px 4px #000}.desktop-icon .ico{display:flex;width:54px;height:54px;margin:auto auto 5px;align-items:center;justify-content:center;border-radius:14px;background:rgba(30,41,59,.85);font-size:27px;border:1px solid #64748b}
+.dock{position:absolute;z-index:20;left:24%;right:24%;bottom:12px;height:62px;border-radius:17px;background:rgba(15,23,42,.9);border:1px solid #64748b;display:flex;align-items:center;justify-content:center;gap:9px;backdrop-filter:blur(12px)}.dock button{width:45px;height:45px;padding:0;background:#1e293b;color:#fff;font-size:22px}.dock .start{background:#f59e0b;color:#111827}
+.window{position:absolute;z-index:10;left:18%;top:15%;width:60%;height:55%;display:none;flex-direction:column;min-width:300px;min-height:220px;background:rgba(15,23,42,.97);border:1px solid #64748b;border-radius:13px;box-shadow:0 25px 80px #000;overflow:hidden}.window.show{display:flex}.window.max{left:2%;top:7%;width:96%;height:84%}
+.titlebar{height:43px;flex:none;display:flex;align-items:center;background:#1e293b;border-bottom:1px solid #475569;padding-left:13px}.title{flex:1;font-weight:800}.win-controls{display:flex;gap:5px;padding-right:7px}.win{width:32px;height:27px;padding:0;background:#334155;color:#fff}.win.close{background:#991b1b}.content{padding:20px;overflow:auto;color:#e2e8f0}.content input,.content textarea{width:100%;background:#0f172a;color:#fff;border:1px solid #475569;border-radius:8px;padding:10px}.result{margin-top:12px;padding:12px;background:#1e293b;border-radius:9px}
+.startmenu{position:absolute;z-index:30;left:10px;bottom:82px;width:260px;padding:12px;border-radius:14px;background:rgba(15,23,42,.98);border:1px solid #475569;display:none;box-shadow:0 20px 60px #000}.startmenu h3{margin:5px 8px 12px}.startmenu button{display:block;width:100%;margin:4px 0;text-align:left;background:#1e293b;color:#fff}
+.toast{position:absolute;z-index:50;right:18px;top:78px;background:#1e293b;border:1px solid #64748b;padding:11px 15px;border-radius:10px;display:none}
+@media(max-width:700px){.dock{left:8%;right:8%}.window{left:5%;width:90%}.sub{display:none}}
+
+.battery-normal{color:inherit}
+.battery-yellow{color:#facc15;font-weight:900}
+.battery-red{color:#ef4444;font-weight:900}
+</style>
+</head>
+<body>
+<div class="game">
+<nav class="tabs"><button class="tab active" data-tab="play">🎮 Play</button><button class="tab" data-tab="sleep">🌙 Sleep</button></nav>
+
+<section id="playTab">
+<header><div><div class="tag">BRAIN • GROW • HUSTLE</div><h1>BGH</h1></div><div class="scores"><div class="score"><small>SCORE</small><b id="score">0</b></div><div class="score"><small>BEST</small><b id="best">0</b></div></div></header>
+<div class="controls"><span class="hint">Arrow keys / WASD • Swipe</span><button id="new">New Game</button></div>
+<div id="board"></div><footer>Reach 2048 by combining equal tiles.</footer>
+</section>
+
+<section id="sleepTab" style="display:none">
+<div class="sleep"><div class="moon">🌙</div><h2>Sleep Tab</h2><p>Rest your mind, then enter your dream world.</p><button class="dream-btn" id="dreamBtn">✨ Dream World</button></div>
+</section>
+</div>
+
+<div class="overlay" id="gameOverlay"><div class="modal"><h2 id="modalTitle">Game Over</h2><p id="modalText"></p><button id="again">Play Again</button><button id="continue" class="secondary" style="display:none">Keep Playing</button></div></div>
+
+<div id="dreamOverlay">
+<div class="dream-desktop">
+<img class="dream-bg" src="DreamOS_mockup.png" alt="">
+<div class="topbar"><span class="brand">☾ DreamOS</span><span class="sub">Where dreams become adventures.</span><span class="status">⌁ Wi‑Fi　🔊　🔋 <span id="batteryLevel" class="battery-normal">--%</span>　<span id="topClock">--:--</span></span></div>
+
+<div class="desktop-icons">
+<button class="desktop-icon" data-app="browser"><span class="ico">🌐</span>Browser</button>
+<button class="desktop-icon" data-app="sleep"><span class="ico">🕐</span>Sleep Clock</button>
+<button class="desktop-icon" data-app="wake"><span class="ico">🚪</span>Wake Portal</button>
+<button class="desktop-icon" data-app="files"><span class="ico">📁</span>Dream Files</button>
+<button class="desktop-icon" data-app="notes"><span class="ico">📝</span>Dream Notes</button>
+<button class="desktop-icon" data-app="settings"><span class="ico">⚙️</span>Settings</button>
+</div>
+
+<div class="window" id="appWindow">
+<div class="titlebar"><span class="title" id="appTitle">DreamOS</span><div class="win-controls"><button class="win" id="minBtn">−</button><button class="win" id="maxBtn">□</button><button class="win close" id="closeBtn">×</button></div></div>
+<div class="content" id="appContent"></div>
+</div>
+
+<div class="startmenu" id="startMenu"><h3>☁️ DreamOS</h3><button data-app="browser">🌐 Dream Browser</button><button data-app="sleep">🕐 Sleep Clock</button><button data-app="wake">🚪 Wake Portal</button><button data-app="files">📁 Dream Files</button><button data-app="notes">📝 Dream Notes</button><button data-app="settings">⚙️ Settings</button></div>
+
+<div class="toast" id="toast"></div>
+<div class="dock">
+<button class="start" id="startBtn">☁️</button><button data-app="browser">🌐</button><button data-app="sleep">🕐</button><button data-app="wake">🚪</button><button data-app="files">📁</button><button data-app="notes">📝</button><button data-app="settings">⚙️</button><span style="flex:1"></span><span id="dockClock">--:--</span><button id="exitBtn" style="background:#991b1b;color:#fff">×</button>
+</div>
+</div>
+</div>
+
+<script>
+'use strict';
+
+/* ---------- 2048 ---------- */
+const board=document.getElementById('board'), scoreEl=document.getElementById('score'), bestEl=document.getElementById('best');
+const gameOverlay=document.getElementById('gameOverlay'), modalTitle=document.getElementById('modalTitle'), modalText=document.getElementById('modalText'), keep=document.getElementById('continue');
+let g=[],score=0,best=Number(localStorage.getItem('bghBest')||0),won=false,locked=false,tX=0,tY=0;
+
+function addTile(){const e=[];for(let y=0;y<4;y++)for(let x=0;x<4;x++)if(!g[y][x])e.push([y,x]);if(!e.length)return;const [y,x]=e[Math.floor(Math.random()*e.length)];g[y][x]=Math.random()<.9?2:4}
+function render(){board.innerHTML='';g.flat().forEach(v=>{const c=document.createElement('div');c.className='cell'+(v?' t'+v:'');c.textContent=v||'';board.appendChild(c)});scoreEl.textContent=score;best=Math.max(best,score);bestEl.textContent=best;localStorage.setItem('bghBest',best)}
+function startGame(){g=Array.from({length:4},()=>Array(4).fill(0));score=0;won=false;locked=false;gameOverlay.style.display='none';addTile();addTile();render()}
+function slide(row){const a=row.filter(Boolean),o=[];let s=0;for(let i=0;i<a.length;i++){if(a[i]===a[i+1]){o.push(a[i]*2);s+=a[i]*2;i++}else o.push(a[i])}while(o.length<4)o.push(0);return[o,s]}
+function canMove(){for(let y=0;y<4;y++)for(let x=0;x<4;x++){if(!g[y][x])return true;if(x<3&&g[y][x]===g[y][x+1])return true;if(y<3&&g[y][x]===g[y+1][x])return true}return false}
+function gameMove(dir){if(locked)return;const before=JSON.stringify(g);let gained=0;if(dir==='left'||dir==='right')for(let y=0;y<4;y++){let r=g[y].slice();if(dir==='right')r.reverse();let z=slide(r);gained+=z[1];r=z[0];if(dir==='right')r.reverse();g[y]=r}else for(let x=0;x<4;x++){let c=[];for(let y=0;y<4;y++)c.push(g[y][x]);if(dir==='down')c.reverse();let z=slide(c);gained+=z[1];c=z[0];if(dir==='down')c.reverse();for(let y=0;y<4;y++)g[y][x]=c[y]}if(before===JSON.stringify(g))return;score+=gained;addTile();render();if(!won&&g.flat().includes(2048)){won=true;modalTitle.textContent='You made 2048!';modalText.textContent='Awesome!';keep.style.display='inline-block';gameOverlay.style.display='flex'}else if(!canMove()){modalTitle.textContent='Game Over';modalText.textContent='Final score: '+score;keep.style.display='none';gameOverlay.style.display='flex'}}
+document.addEventListener('keydown',e=>{const m={ArrowLeft:'left',ArrowRight:'right',ArrowUp:'up',ArrowDown:'down',a:'left',d:'right',w:'up',s:'down',A:'left',D:'right',W:'up',S:'down'};if(m[e.key]){e.preventDefault();gameMove(m[e.key])}});
+board.addEventListener('pointerdown',e=>{tX=e.clientX;tY=e.clientY});board.addEventListener('pointerup',e=>{const dx=e.clientX-tX,dy=e.clientY-tY;if(Math.max(Math.abs(dx),Math.abs(dy))<30)return;gameMove(Math.abs(dx)>Math.abs(dy)?dx>0?'right':'left':dy>0?'down':'up')});
+document.getElementById('new').onclick=startGame;document.getElementById('again').onclick=startGame;keep.onclick=()=>gameOverlay.style.display='none';
+
+/* ---------- tabs ---------- */
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));t.classList.add('active');const p=t.dataset.tab==='play';document.getElementById('playTab').style.display=p?'block':'none';document.getElementById('sleepTab').style.display=p?'none':'block'});
+
+/* ---------- DreamOS ---------- */
+const dreamOverlay=document.getElementById('dreamOverlay'),appWindow=document.getElementById('appWindow'),appTitle=document.getElementById('appTitle'),appContent=document.getElementById('appContent'),startMenu=document.getElementById('startMenu'),toastEl=document.getElementById('toast');
+let maximized=false,clockTimer=null;
+
+function toast(msg){toastEl.textContent=msg;toastEl.style.display='block';clearTimeout(window.toastTimer);window.toastTimer=setTimeout(()=>toastEl.style.display='none',1800)}
+function closeApp(){appWindow.classList.remove('show');clearInterval(clockTimer);clockTimer=null;maximized=false;appWindow.classList.remove('max')}
+function openApp(name){
+const templates={
+browser:['🌐 Dream Browser',`<h2>Dream Browser</h2><p>Search the Dream Web.</p><input id="q" placeholder="Search the dream world..."><button id="search" style="margin-top:10px">Search</button><div id="results"></div>`],
+sleep:['🕐 Sleep Clock',`<h2>Sleep Clock</h2><div id="clock" style="font-size:58px;font-weight:900">--:--:--</div><p>Relax. DreamOS is keeping time.</p><button id="dreamMode">✨ Start Dream Mode</button>`],
+wake:['🚪 Wake Portal',`<h2>Wake Portal</h2><p>Ready to return to reality?</p><div style="font-size:80px;text-align:center">🌀</div><button id="wake">Wake Up</button>`],
+files:['📁 Dream Files',`<h2>Dream Files</h2><p>📄 Dream Notes</p><p>🖼️ Dream Gallery</p><p>🌌 Dream Maps</p><button id="newNote">＋ New Dream Note</button>`],
+notes:['📝 Dream Notes',`<h2>Dream Notes</h2><textarea id="note" rows="9" placeholder="Write your dream..."></textarea><button id="saveNote" style="margin-top:10px">Save Dream</button>`],
+settings:['⚙️ Settings',`<h2>Settings</h2><p>🔊 Sounds <input id="sound" type="checkbox" checked style="width:auto"></p><p>✨ Animations <input id="anim" type="checkbox" checked style="width:auto"></p><button id="saveSettings">Save Settings</button>`]
+};
+const t=templates[name]||templates.browser;appTitle.textContent=t[0];appContent.innerHTML=t[1];appWindow.classList.add('show');startMenu.style.display='none';
+if(name==='browser')document.getElementById('search').onclick=()=>{const q=document.getElementById('q').value.replace(/[<>]/g,'').trim();document.getElementById('results').innerHTML=q?`<div class="result">🌙 Dream result for <b>${q}</b></div>`:'<div class="result">Type a search.</div>'};
+if(name==='sleep'){clearInterval(clockTimer);const tick=()=>{const e=document.getElementById('clock');if(e)e.textContent=new Date().toLocaleTimeString()};tick();clockTimer=setInterval(tick,1000);document.getElementById('dreamMode').onclick=()=>toast('✨ Dream Mode activated!')}
+if(name==='wake')document.getElementById('wake').onclick=()=>{closeApp();dreamOverlay.style.display='none';document.body.style.overflow=''};
+if(name==='files')document.getElementById('newNote').onclick=()=>openApp('notes');
+if(name==='notes'){document.getElementById('note').value=localStorage.getItem('bghDreamNote')||'';document.getElementById('saveNote').onclick=()=>{localStorage.setItem('bghDreamNote',document.getElementById('note').value);toast('✓ Dream saved')}}
+if(name==='settings')document.getElementById('saveSettings').onclick=()=>toast('✓ Settings saved');
+}
+document.querySelectorAll('[data-app]').forEach(b=>b.onclick=()=>openApp(b.dataset.app));
+document.getElementById('minBtn').onclick=()=>appWindow.classList.remove('show');
+document.getElementById('closeBtn').onclick=closeApp;
+document.getElementById('maxBtn').onclick=()=>{maximized=!maximized;appWindow.classList.toggle('max',maximized)};
+document.getElementById('startBtn').onclick=()=>startMenu.style.display=startMenu.style.display==='block'?'none':'block';
+document.getElementById('exitBtn').onclick=()=>{closeApp();dreamOverlay.style.display='none';document.body.style.overflow=''};
+document.getElementById('dreamBtn').onclick=()=>{closeApp();startMenu.style.display='none';dreamOverlay.style.display='block';document.body.style.overflow='hidden'};
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&dreamOverlay.style.display==='block'){closeApp();dreamOverlay.style.display='none';document.body.style.overflow=''}});
+
+/* live clocks */
+function updateBattery(){
+  const el=document.getElementById('batteryLevel');
+  if(!el)return;
+  if(navigator.getBattery){
+    navigator.getBattery().then(b=>{
+      const set=()=>{
+  const pct=Math.round(b.level*100);
+  el.textContent=pct+'%';
+  el.classList.remove('battery-normal','battery-yellow','battery-red');
+  if(pct<=15) el.classList.add('battery-red');
+  else if(pct<=50) el.classList.add('battery-yellow');
+  else el.classList.add('battery-normal');
+};
+      set();
+      b.addEventListener('levelchange',set);
+      b.addEventListener('chargingchange',set);
+    }).catch(()=>el.textContent='--%');
+  }else{
+    el.textContent='--%';
+  }
+}
+function clocks(){const d=new Date(),s=d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});document.getElementById('topClock').textContent=s;document.getElementById('dockClock').textContent=s}
+clocks();updateBattery();setInterval(clocks,1000);startGame();
+</script>
+</body>
+</html>
